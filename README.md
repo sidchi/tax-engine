@@ -38,28 +38,27 @@ problem wearing an accounting hat:
             checkout / renewal / refund (billing system)
                               │  REST
                               ▼
-   ┌──────────────────────────────────────────────────────┐
-   │ tax-service  (Spring Boot)                           │
-   │                                                      │
-   │  TaxController ──► TransactionService                │
-   │                    quote → commit → void / refund    │
-   │                    idempotency keys, state machine   │
-   │                         │                │           │
-   │                         ▼                ▼           │
-   │                  ProviderRouter      AuditLog ──► reconciliation job
-   │          timeout · retry · circuit breaker per provider
-   │                 │                    │               │
-   │                 ▼                    ▼               │
-   │        cached-rate fallback    Postgres (Flyway)     │
-   │        ("estimated" + reconcile-later queue)         │
-   └───────────┬───────────────────────────┬──────────────┘
+   ┌──────────────────────────────────────────────────────────────────┐
+   │ tax-service  (Spring Boot)                                       │
+   │                                                                  │
+   │  TaxController ──► TransactionService                            │
+   │                    quote → commit → void / refund                │
+   │                    idempotency keys, state machine               │
+   │                         │                 │                      │
+   │                         ▼                 ▼                      │
+   │                  ProviderRouter       AuditLog ──► reconcile job │
+   │    timeout · retry · breaker per provider                        │
+   │                 │                     │                          │
+   │                 ▼                     ▼                          │
+   │        cached-rate fallback     Postgres (Flyway)                │
+   │        ("estimated" + reconcile-later queue)                     │
+   └───────────┬───────────────────────────┬──────────────────────────┘
                ▼                           ▼
-     ┌──────────────────┐        ┌────────────────────┐
-     │ RuleTableProvider│        │ Vertex-style adapter│ ──► WireMock stub
-     │ (sample rates)   │        │ (public concepts)   │
-     └──────────────────┘        └────────────────────┘
-               ▲                           ▲
-               └──── tax-core: domain + provider SPI (no Spring) ────┘
+     ┌──────────────────┐        ┌──────────────────────┐
+     │ RuleTableProvider│        │ Vertex-style adapter │ ──► WireMock stub
+     │ (sample rates)   │        │ (public concepts)    │
+     └──────────────────┘        └──────────────────────┘
+       both implement the TaxProvider SPI in tax-core (no Spring)
 ```
 
 ## Modules
