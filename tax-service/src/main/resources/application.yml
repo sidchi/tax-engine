@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: tax-engine
+  main:
+    banner-mode: off
+
+server:
+  port: 8080
+  # Let in-flight quote/commit requests finish before the pod goes away.
+  shutdown: graceful
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # Expose only what orchestration and humans need; env/beans/configprops stay closed.
+        include: health,info
+  endpoint:
+    health:
+      # /actuator/health/liveness and /actuator/health/readiness for Kubernetes-style probes.
+      probes:
+        enabled: true
