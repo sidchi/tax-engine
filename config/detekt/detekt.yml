@@ -1,0 +1,36 @@
+# Overrides on top of detekt's default config (buildUponDefaultConfig = true).
+# Keep this file small: every deviation from the defaults should have a reason.
+
+build:
+  maxIssues: 0
+
+formatting:
+  # ktlint rules via detekt-formatting; line length is enforced by style>MaxLineLength.
+  MaximumLineLength:
+    active: false
+  # Trailing commas make diffs of multi-line parameter lists one line instead of two.
+  TrailingCommaOnCallSite:
+    active: true
+    useTrailingCommaOnCallSite: true
+  TrailingCommaOnDeclarationSite:
+    active: true
+    useTrailingCommaOnDeclarationSite: true
+
+style:
+  MaxLineLength:
+    maxLineLength: 120
+  # Tax code is full of protocol constants (rate scales, HTTP codes, retry caps).
+  MagicNumber:
+    ignorePropertyDeclaration: true
+    ignoreCompanionObjectPropertyDeclaration: true
+    ignoreNamedArgument: true
+    excludes: ['**/test/**']
+
+comments:
+  # Public types and functions are the contract between modules and with reviewers: document them.
+  UndocumentedPublicClass:
+    active: true
+    excludes: ['**/test/**']
+  UndocumentedPublicFunction:
+    active: true
+    excludes: ['**/test/**']
