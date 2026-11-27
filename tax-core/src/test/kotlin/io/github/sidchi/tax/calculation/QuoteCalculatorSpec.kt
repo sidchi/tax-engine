@@ -176,8 +176,9 @@ class QuoteCalculatorSpec : FunSpec({
 
     context("taxability") {
         test("an exempt line (no jurisdictions) carries no tax and no summary row") {
+            val exemptLine = line("exempt", "10.00").copy(taxCode = ProductTaxCode("EXEMPT.SAMPLE"))
             val quote = QuoteCalculator.calculate(
-                request(listOf(line("taxed", "10.00"), line("exempt", "10.00").copy(taxCode = ProductTaxCode("EXEMPT.SAMPLE")))),
+                request(listOf(line("taxed", "10.00"), exemptLine)),
                 mapOf(LineId("taxed") to listOf(stateOnly), LineId("exempt") to emptyList()),
             )
             val exempt = quote.line(LineId("exempt")).shouldNotBeNull()
