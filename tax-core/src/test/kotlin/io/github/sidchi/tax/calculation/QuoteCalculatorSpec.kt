@@ -15,6 +15,7 @@ import io.github.sidchi.tax.domain.LineId
 import io.github.sidchi.tax.domain.Money
 import io.github.sidchi.tax.domain.PricingMode.TAX_EXCLUSIVE
 import io.github.sidchi.tax.domain.PricingMode.TAX_INCLUSIVE
+import io.github.sidchi.tax.domain.ProductTaxCode
 import io.github.sidchi.tax.domain.RoundingLevel.PER_INVOICE
 import io.github.sidchi.tax.domain.RoundingLevel.PER_LINE
 import io.github.sidchi.tax.domain.RoundingPolicy
@@ -176,7 +177,7 @@ class QuoteCalculatorSpec : FunSpec({
     context("taxability") {
         test("an exempt line (no jurisdictions) carries no tax and no summary row") {
             val quote = QuoteCalculator.calculate(
-                request(listOf(line("taxed", "10.00"), line("exempt", "10.00", taxCode = "EXEMPT.SAMPLE"))),
+                request(listOf(line("taxed", "10.00"), line("exempt", "10.00").copy(taxCode = ProductTaxCode("EXEMPT.SAMPLE")))),
                 mapOf(LineId("taxed") to listOf(stateOnly), LineId("exempt") to emptyList()),
             )
             val exempt = quote.line(LineId("exempt")).shouldNotBeNull()

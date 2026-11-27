@@ -39,8 +39,7 @@ object SampleData {
         currency: String = "USD",
         quantity: String = "1",
         discounts: List<Discount> = emptyList(),
-        taxCode: String = "SAAS",
-    ) = TaxableLine(LineId(id), ProductTaxCode(taxCode), Money.of(price, currency), BigDecimal(quantity), discounts)
+    ) = TaxableLine(LineId(id), ProductTaxCode("SAAS"), Money.of(price, currency), BigDecimal(quantity), discounts)
 
     fun request(
         lines: List<TaxableLine>,
