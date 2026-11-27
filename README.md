@@ -10,7 +10,8 @@ or down.
 > Every rate, address and jurisdiction in this repo is a synthetic or clearly labeled sample, not authoritative tax
 > data, and there are no real provider credentials anywhere.
 
-> **Status:** scaffold (build, CI, service skeleton). The domain model is next. See [ROADMAP.md](ROADMAP.md).
+> **Status:** domain model and quote math in `tax-core`. The provider SPI and rule-table provider are next. See
+> [ROADMAP.md](ROADMAP.md).
 
 ## The problem
 
@@ -60,6 +61,36 @@ problem wearing an accounting hat:
      └──────────────────┘        └──────────────────────┘
        both implement the TaxProvider SPI in tax-core (no Spring)
 ```
+
+## Domain model
+
+Everything lives in `tax-core` (`io.github.sidchi.tax.domain` and `.calculation`), in plain Kotlin.
+
+| Type | Role |
+|------|------|
+| `Money` | `BigDecimal` + ISO 4217 currency. Arithmetic is exact and never rounds; the only way to currency precision is `rounded(mode)`. Equality is numeric (`1.0 == 1.00`), mixing currencies throws. |
+| `TaxRate` | Exact, normalized fraction (`7.25%` = `0.0725`), 0–100%. Zero is a valid, *zero-rated* rate. |
+| `TaxableLine` | Line id, `ProductTaxCode`, unit price, (possibly fractional) quantity and discounts. Fixed and percentage discounts are both taken from the gross amount, so their order never matters. |
+| `Address`, `Jurisdiction` | Ship-to/bill-to addresses (US addresses must carry state and ZIP) and taxing authorities at country, state, county, city or district level. |
+| `TaxRequest` | Lines + addresses + `PricingMode` (tax-exclusive or tax-inclusive) + `RoundingPolicy` (per line or per invoice, with an explicit `RoundingMode`). Ship-to sources tax; bill-to is the fallback for digital sales. |
+| `TaxQuote` | Per-line tax with per-jurisdiction detail, plus a summary by jurisdiction **and rate** (so standard and reduced VAT are reported separately). Line tax always adds up to the summary. |
+| `QuoteCalculator` | The money math every provider shares. Providers decide *which* rates apply; this decides the cents. |
+
+How a quote is calculated:
+
+1. **Line amount** = unit price × quantity − discounts, rounded to the currency's minor unit (2 for USD, 0 for JPY,
+   3 for KWD). That is the price on the invoice line.
+2. **Exact tax** per line and jurisdiction: `amount × rate` (tax-exclusive) or
+   `amount × rate / (1 + combined rate)` (tax-inclusive). Stacked rates add up; no tax-on-tax.
+3. **Rounding.** *Per line*: every line/jurisdiction amount is rounded. *Per invoice*: each jurisdiction-and-rate
+   total is rounded once, then allocated back to lines by largest remainder so lines still reconcile. Three
+   0.99 USD lines at 7.25% owe 0.21 per line but 0.22 per invoice; the tests pin both.
+4. **Net of tax.** Tax-exclusive: the line amount. Tax-inclusive: the line amount minus its rounded tax, so the
+   customer-facing price never moves (9.99 EUR at 20% is 1.67 tax with `HALF_UP` and 1.66 with `HALF_EVEN`, and
+   9.99 either way).
+
+A provider must return a rate list for *every* line (empty means exempt); a missing line is an error rather than
+a silent zero, because an undercharge is the expensive failure in tax.
 
 ## Modules
 
